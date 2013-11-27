@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -W -Wall -std=gnu99 -ffast-math
+CFLAGS = -W -Wall -std=gnu99 -ffast-math -fgnu89-inline
 LDFLAGS = -lm 
 OBJ = main.o io.o aux.o train.o
 

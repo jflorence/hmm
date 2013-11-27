@@ -34,7 +34,7 @@ static inline long partition(delays_mt *A, long p, long r)
 }
 
 
-void myquicksort(delays_mt *A, long p, long r)
+static void myquicksort(delays_mt *A, long p, long r)
 {
 	if(p>=r)
 		return;
@@ -51,6 +51,35 @@ void mysort(delays_mt *data)
 	myquicksort(data, 0, data->length-1);	
 	return;
 }
+
+
+double prod(double *data, int n)
+{
+	double res = 1;
+	if(n<1)
+		return 1;
+	for(int i =0; i<n; i++)
+	{
+		res *= data[i];
+	}
+	return res;
+}
+
+
+inline double sum(double *data, int n)
+{
+	double res = 0.0;
+	if(n<1)
+		return 0.0;
+	for(int i = 0; i<n; i++)
+	{
+		res += data[i];
+	}
+	return res;
+}
+
+
+
 
 
 

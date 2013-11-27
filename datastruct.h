@@ -30,6 +30,8 @@ struct params
 	//also, the params of the duration distributions:
 	double *dmu;
 	double *dsigma;
+	double *dshape;
+	double *dscale;
 };
 
 
