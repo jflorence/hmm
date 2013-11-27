@@ -53,9 +53,9 @@ void mysort(delays_mt *data)
 }
 
 
-double prod(double *data, int n)
+float_mt prod(float_mt *data, int n)
 {
-	double res = 1;
+	float_mt res = 1;
 	if(n<1)
 		return 1;
 	for(int i =0; i<n; i++)
@@ -66,9 +66,9 @@ double prod(double *data, int n)
 }
 
 
-inline double sum(double *data, int n)
+inline float_mt sum(float_mt *data, int n)
 {
-	double res = 0.0;
+	float_mt res = 0.0;
 	if(n<1)
 		return 0.0;
 	for(int i = 0; i<n; i++)

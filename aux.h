@@ -4,8 +4,8 @@
 #include "datastruct.h"
 
 void mysort(delays_mt *data);
-inline double prod(double *data, int n);
-inline double sum(double *data, int n);
+inline float_mt prod(float_mt *data, int n);
+inline float_mt sum(float_mt *data, int n);
 
 
 

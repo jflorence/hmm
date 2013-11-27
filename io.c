@@ -76,7 +76,7 @@ inline static void strtodata(char *str, delays_mt *data, long i)
 
 
 
-void plot1D(double *data, long length)
+void plot1D(float_mt *data, long length)
 {
 	char tempname[L_tmpnam];
 	tmpnam(tempname);

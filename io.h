@@ -7,7 +7,7 @@
 void parse(int argc, char *argv[]);
 delays_mt getinput(void);
 
-void plot1D(double *data, long length);
+void plot1D(float_mt *data, long length);
 
 #endif
 

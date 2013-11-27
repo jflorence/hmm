@@ -14,23 +14,23 @@
 static int N;
 static long T;
 static long D;
-static double step = 0.001;
-static double dstep = 1;
-static double *alpha;
-static double *beta;
-static double **ydensity;
-static double **distribs;
-static double **dur_dists;
+static float_mt step = 0.001;
+static float_mt dstep = 1;
+static float_mt *alpha;
+static float_mt *beta;
+static float_mt **ydensity;
+static float_mt **distribs;
+static float_mt **dur_dists;
 static delay_mt *y;
-static double *A;
-static double *Ahat;
-double *muhat;
-double *sigmahat;
-double *c;
-double *dshape;
-double *dscale;
-double *dshapehat;
-double *dscalehat;
+static float_mt *A;
+static float_mt *Ahat;
+float_mt *muhat;
+float_mt *sigmahat;
+float_mt *c;
+float_mt *dshape;
+float_mt *dscale;
+float_mt *dshapehat;
+float_mt *dscalehat;
 
 
 
@@ -38,7 +38,7 @@ double *dscalehat;
 
 static inline void initalpha(void);
 static inline void initbeta(void);
-static inline void compute_gamma_dist(double *dist, int length, double step, double shape, double scale);
+static inline void compute_gamma_dist(float_mt *dist, int length, float_mt step, float_mt shape, float_mt scale);
 
 static inline void density_of_y();
 static inline void compute_alphas(void);
@@ -56,8 +56,8 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	T = data->length;
 	y = data->delay;
 
-	alpha = malloc(N*T*sizeof(double));
-	beta = malloc(N*T*sizeof(double));
+	alpha = malloc(N*T*sizeof(float_mt));
+	beta = malloc(N*T*sizeof(float_mt));
 	if(alpha == NULL || beta == NULL)
 	{
 		fprintf(stderr, "Couldn't malloc\n");
@@ -65,7 +65,7 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	}
 
 	int counter = 0;
-	//double epsilon = 1.0;
+	//float_mt epsilon = 1.0;
 	D = p->D;
 	assert(T>2*D);
 	initalpha();
@@ -73,8 +73,8 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 
 	long size_dist = ceil(ymax/step)+1;
 	long size_dur_dist = D/dstep;
-	distribs = malloc(sizeof(double *)*N);
-	dur_dists = malloc(sizeof(double *)*N);
+	distribs = malloc(sizeof(float_mt *)*N);
+	dur_dists = malloc(sizeof(float_mt *)*N);
 	if(distribs == NULL || dur_dists == NULL)
 	{
 		fprintf(stderr, "Couldn't malloc\n");
@@ -82,8 +82,8 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	}
 	for(int i = 0; i< N; i++)
 	{
-		distribs[i] = malloc(sizeof(double)*size_dist);
-		dur_dists[i] = malloc(sizeof(double)*size_dur_dist);
+		distribs[i] = malloc(sizeof(float_mt)*size_dist);
+		dur_dists[i] = malloc(sizeof(float_mt)*size_dur_dist);
 		if(distribs[i] == NULL || dur_dists[i] == NULL)
 		{
 			fprintf(stderr, "Couldn't malloc");
@@ -91,7 +91,7 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 		}
 	}
 
-	ydensity = malloc(N*sizeof(double));
+	ydensity = malloc(N*sizeof(float_mt));
 	if(ydensity == NULL)
 	{
 		fprintf(stderr, "Couldnt malloc\n");
@@ -99,7 +99,7 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	}
 	for(int i =0; i<N; i++)
 	{
-		ydensity[i] = malloc(sizeof(double)*T);
+		ydensity[i] = malloc(sizeof(float_mt)*T);
 		if(ydensity[i] == NULL)
 		{
 			fprintf(stderr, "Couldn't malloc\n");
@@ -107,18 +107,18 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 		}
 	}
 
-	A = malloc(N*N*sizeof(double));
-	memcpy(A, p->A, N*N*sizeof(double));
-	c = malloc(T*sizeof(double));
+	A = malloc(N*N*sizeof(float_mt));
+	memcpy(A, p->A, N*N*sizeof(float_mt));
+	c = malloc(T*sizeof(float_mt));
 	for(int i = 0; i<T; i++)
 		c[i] = 1.0;
-	Ahat = malloc(N*N*sizeof(double));
-	muhat = malloc(sizeof(double)*N);
-	sigmahat = malloc(sizeof(double)*N);
-	dshape = malloc(sizeof(double)*N);
-	dscale = malloc(sizeof(double)*N); 
-	dshapehat = malloc(sizeof(double)*N); 
-	dscalehat = malloc(sizeof(double)*N); 
+	Ahat = malloc(N*N*sizeof(float_mt));
+	muhat = malloc(sizeof(float_mt)*N);
+	sigmahat = malloc(sizeof(float_mt)*N);
+	dshape = malloc(sizeof(float_mt)*N);
+	dscale = malloc(sizeof(float_mt)*N); 
+	dshapehat = malloc(sizeof(float_mt)*N); 
+	dscalehat = malloc(sizeof(float_mt)*N); 
 	if(A == NULL || Ahat == NULL || muhat == NULL || sigmahat == NULL ||
 		dshape == NULL || dscale == NULL || dshapehat == NULL || dscalehat == NULL)
 	{
@@ -178,12 +178,12 @@ static inline void initbeta(void)
 }
 
 
-static inline void compute_gamma_dist(double *dist, int length, double step, double shape, double scale)
+static inline void compute_gamma_dist(float_mt *dist, int length, float_mt step, float_mt shape, float_mt scale)
 {
-	double x = 0;
+	float_mt x = 0;
 	for(int i = 0; i<length; i++)
 	{
-		double G = tgamma(shape);
+		float_mt G = tgamma(shape);
 		dist[i] = (pow(x, shape-1)*exp(-x/scale))/(G*pow(scale, shape));
 		x += step;
 	}
@@ -210,7 +210,7 @@ void density_of_y(void)
 static inline void compute_alphas(void)
 {
 	//Is this the best order for the loops ?
-	register double term;
+	register float_mt term;
 	
 	for(int t = D; t<T-D; t++)
 	{
@@ -220,14 +220,14 @@ static inline void compute_alphas(void)
 			{
 				for(int i=0; i<N; i++)
 				{
-					term = alpha[(t-d-1)*N+i]*A(i*N+j)*(dur_dists[j])[d]*prod(&c[t-d],d-1);
+					term = alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d]*prod(&c[t-d],d-1);
 					term *= prod(&(ydensity[j])[t-d],d);
 					alpha[t*N+j] += term;
 				}
 			}
 		}
 		c[t] = 1/sum(&alpha[T*N], N);
-		for(i=0; i<N; i++)
+		for(int i=0; i<N; i++)
 		{
 			alpha[t*N + i] *= c[t];
 		}
@@ -235,7 +235,7 @@ static inline void compute_alphas(void)
 }
 static inline void compute_betas(void)
 {
-	register double term;
+	register float_mt term;
 	long index;
 	for(int t = T-D-1; t>=D; t--)
 	{
@@ -246,7 +246,7 @@ static inline void compute_betas(void)
 			{
 				for(int j = 0; j<N; j++)
 				{
-					term = A[i*N+j]*(dur_dist[j])[d]*prod(c[t+1], d-1)*beta((t+d-1)*N+j);
+					term = A[i*N+j]*(dur_dists[j])[d]*prod(&c[t+1], d-1)*beta[(t+d-1)*N+j];
 					term *= prod(&(ydensity[j])[t+1],d);
 					beta[index] += term;
 				}
@@ -257,10 +257,10 @@ static inline void compute_betas(void)
 }
 static inline void compute_A(void)
 {
-	double num;
-	double term;
-	double den;
-	double *temp = malloc(sizeof(double)*T);
+	float_mt num;
+	float_mt term;
+	float_mt den;
+	float_mt *temp = malloc(sizeof(float_mt)*T);
 	for(int i=0;i<N;i++)
 	{
 		for(int j=0; j<N; j++)
@@ -270,13 +270,13 @@ static inline void compute_A(void)
 			{
 				for(int d=0; d<D; d++)
 				{
-					term = A[i*N+j]*(dur_dist[j])[d]*beta[(t+d)*N+j]*prod(c[t+1],d-1);
+					term = A[i*N+j]*(dur_dists[j])[d]*beta[(t+d)*N+j]*prod(&c[t+1],d-1);
 					term *= alpha[t*N+i]*prod(&(ydensity[j])[t+1],d);
 					num += term;
 				}
 			temp[t]=alpha[t*N+i]*beta[t*N+i]/c[t];
 			}
-			dem = sum(&temp[D], T-2*D);
+			den = sum(&temp[D], T-2*D);
 			Ahat[i*N+j] = num/den;
 		}
 	}
@@ -284,13 +284,65 @@ static inline void compute_A(void)
 }
 static inline void compute_mu_sigma(void)
 {
+	float_mt nummu = 0;
+	float_mt numsig = 0;
+	float_mt den = 0;
+	float_mt term;
+	float_mt somme;
+	for(int j=0; j<N; j++)
+	{
+		for(int t=D; t<T-D; t++)
+		{
+			for(int d=0;d<D;d++)
+			{
+				somme = 0;
+				for(int k=0; k<d; k++)
+				{
+					somme += (y[t-d]-mu(j))*(y[t-d]-mu(j));
+				}
+				for(int i =0; i<N; i++)
+				{
+					term = alpha[(t-d+1)*N+i]*A[i*N+j]*(dur_dists[j])[d]*prod(&c[t-d],d-1);
+					term *= prod((ydensity[j])[t-d], d-1);
+					nummu += term*sum(&y[t-d],d);
+					numsig += term*somme;
+					den = den+term;
+				}
+			}
+		}
+		muhat(j) = nummu/den;
+		sigmahat(j) = numsig/den;
+	}
 }
 static inline void compute_duration_params(void)
 {
+
 }
 static inline void compute_duration_dist_params(void)
 {
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

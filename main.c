@@ -13,15 +13,15 @@
 static void initparams(struct params *p, delay_mt ymax)
 {
 	p->N = Ni;
-	p->A = malloc(sizeof(double)*p->N);
-	p->shape = malloc(sizeof(double)*p->N);
-	p->scale = malloc(sizeof(double)*p->N);
-	p->mu = malloc(sizeof(double)*p->N);
-	p->sigma = malloc(sizeof(double)*p->N);
-	p->dmu = malloc(sizeof(double)*p->N);
-	p->dsigma = malloc(sizeof(double)*p->N);
-	p->pi = malloc(sizeof(double)*p->N);
-	p->steady = malloc(sizeof(double)*p->N);
+	p->A = malloc(sizeof(float_mt)*p->N);
+	p->shape = malloc(sizeof(float_mt)*p->N);
+	p->scale = malloc(sizeof(float_mt)*p->N);
+	p->mu = malloc(sizeof(float_mt)*p->N);
+	p->sigma = malloc(sizeof(float_mt)*p->N);
+	p->dmu = malloc(sizeof(float_mt)*p->N);
+	p->dsigma = malloc(sizeof(float_mt)*p->N);
+	p->pi = malloc(sizeof(float_mt)*p->N);
+	p->steady = malloc(sizeof(float_mt)*p->N);
 
 	if(p->A == NULL || p->shape == NULL || p->scale == NULL || p->mu == NULL ||
 		p->sigma == NULL || p->dmu == NULL || p->dsigma == NULL || 
