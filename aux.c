@@ -10,11 +10,9 @@ static inline long partition(delays_mt *A, long p, long r)
 	delay_mt tempd;
 	for(int j=p; j<r;j++)
 	{
-		//printf("%d\n", j);
 		if(A->time[j]<=x)
 		{
 			i++;
-
 			tempt = A->time[i];
 			tempd = A->delay[i];
 			A->time[i] = A->time[j];
@@ -45,19 +43,41 @@ static void myquicksort(delays_mt *A, long p, long r)
 }
 
 
+static void insertion(delays_mt *A, long L)
+{
+	time_mt key;
+	delay_mt d;
+	long i;
+	for(long j=1; j<L; j++)
+	{
+		key = A->time[j];
+		d = A->delay[j];
+		i = j-1;
+		while(i>=0 && A->time[i]>key)
+		{
+			A->time[i+1] = A->time[i];
+			A->delay[i+1] = A->delay[i];
+			i--;
+		}
+		A->time[i+1] = key;
+		A->delay[i+1] = d;
+	}
+}
+
 
 void mysort(delays_mt *data)
 {
-	myquicksort(data, 0, data->length-1);	
+	//myquicksort(data, 0, data->length-1);	
+	insertion(data, data->length);
 	return;
 }
 
 
 float_mt prod(float_mt *data, int n)
 {
-	float_mt res = 1;
+	float_mt res = 1.0;
 	if(n<1)
-		return 1;
+		return 1.0;
 	for(int i =0; i<n; i++)
 	{
 		res *= data[i];

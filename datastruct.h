@@ -10,7 +10,7 @@ struct delays_mt
 {
 	time_mt *time;
 	delay_mt *delay;
-	float_mt length;
+	long long length;
 };
 typedef struct delays_mt delays_mt;
 
