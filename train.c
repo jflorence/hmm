@@ -103,7 +103,11 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 		//update log likelihood
 		currentlike = 0;
 		for(int i=0; i<T; i++)
+		{
 			currentlike+=log(c[i]);
+			printf("c: %f\n", c[i]);
+			printf("logc: %f\n", log(c[i]));
+		}
 		Dlike = fabsl((long double)currentlike-(long double)previouslike);
 		previouslike = currentlike;
 	}
@@ -383,7 +387,7 @@ static inline void compute_duration_shape(void)
 		{
 			dshapehat[j] = 0.01;
 		}
-	
+		dispstr(4, "j: %d\n", j);	
 		dispstr(5, "dshape: %f\n", dshape[j]);
 		dispstr(5, "digamma: %f\n", digamma);
 		dispstr(5, "C: %f\n", C);
@@ -477,7 +481,7 @@ static inline void traininit(struct params *p, delays_mt *data, delay_mt ymax)
 	memcpy(A, p->A, N*N*sizeof(float_mt));
 	for(long long i = 0; i<T; i++)
 		c[i] = 1.0;
-	for(long long i = 0; i<N;i++)
+	for(int i = 0; i<N;i++)
 	{
 		mu[i] = p->mu[i];
 		scale[i] = p->scale[i];

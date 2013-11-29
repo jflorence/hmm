@@ -1,9 +1,12 @@
 #ifndef DATASTRUCT_H
 #define DATASTRUCT_H
 
-typedef double  time_mt;
-typedef double delay_mt;
-typedef double float_mt;
+//typedef double  time_mt;
+//typedef double delay_mt;
+//typedef double float_mt;
+#define time_mt  double
+#define delay_mt double
+#define float_mt double
 
 
 struct delays_mt
