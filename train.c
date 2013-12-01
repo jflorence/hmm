@@ -44,6 +44,7 @@ static float_mt *dscalehat;
 
 
 static inline void traininit(struct params *p, delays_mt *data, delay_mt ymax);
+static void freetrainparams(void);
 static inline void initalpha(void);
 static inline void initbeta(void);
 static inline void compute_distribs(long size_dist, long size_dur_dist);
@@ -114,6 +115,8 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	dispstr(1, "Writing alphas and betas to file...\n");
 	write_alpha_beta(alpha, beta, N, T);
 #endif
+
+	freetrainparams();
 	
 	dispstr(1,"Training complete.\n");
 	dispstr(2, "Dlike: %e\n", Dlike);
@@ -128,8 +131,12 @@ void compute_distribs(long size_dist, long size_dur_dist)
 	{
 		compute_gamma_dist(distribs[i], size_dist, step, shape[i], scale[i]);
 		compute_gamma_dist(dur_dists[i], size_dur_dist, dstep, dshape[i], dscale[i]);	
-	
-	//	plot1D(distribs[i], size_dist);
+		//dispstr(3, "i: %d\n", i);	
+		//dispstr(4, "size_dist: %ld\n", size_dist);
+		//dispstr(4, "step: %Le\n", step);
+		//dispstr(4, "shape: %Le\n", shape[i]);
+		//dispstr(4, "scale: %Le\n", scale[i]);
+		//plot1D(distribs[i], size_dist);
 	}
 }
 
@@ -184,7 +191,9 @@ void density_of_y(void)
 			index = round(y[k]/step)+1; //this is an index on the vector of the pdf
 			(ydensity[j])[k] = (distribs[j])[index];
 		}
+		//plot1D(distribs[j], size_dist);
 	}
+	
 }
 
 
@@ -192,30 +201,24 @@ static inline void compute_alphas(void)
 {
 	dispstr(2,"Computing alphas...\n");
 	//Is this the best order for the loops ?
-	register float_mt term;
+	float_mt term;
+	float_mt prodc;
+	float_mt prody;
+	
 	for(long long t = D; t<T-D; t++)
 	{
-		dispstr(3,"t: %d\n", t);
 		for(int j = 0; j<N; j++)
 		{
-			dispstr(4,"j: %d\n", j);
+			prodc = 1.0/c[t];
+			prody = 1.0;
 			for(int d = 0; d<D; d++)
 			{
-				dispstr(5,"d: %d\n", d);
+				prodc *= c[t-d];
+				prody *= (ydensity[j])[t-d];
 				for(int i=0; i<N; i++)
 				{
-					if(j == 0)
-						dispstr(6,"i: %d\n", i);
 					term = alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t-d],d);
 					term *= prod(&(ydensity[j])[t-d],d+1);
-					//dispstr(7,"term: %Le\n");
-					if(j==0)
-					{
-						dispstr(7, "alpha*A: %Le\n", alpha[(t-d-1)*N+i]*A[i*N+j]);
-						dispstr(7, "proddensity: %Le\n", prod(&(ydensity[j])[t-d],d+1));
-						dispstr(7, "durdist: %Le\n", (dur_dists[j])[d+1]);
-					}
-					//dispstr(7, "\n");
 					alpha[t*N+j] += term;
 				}
 			}
@@ -403,7 +406,33 @@ static inline void compute_duration_shape(void)
 
 
 
+static void freetrainparams(void)
+{
+	free(alpha);
+	free(beta);
+	for(int i = 0; i<N; i++)
+	{
+		free(distribs[i]);
+		free(dur_dists[i]);
+		free(ydensity[i]);
+	}
+	free(distribs);
+	free(dur_dists);
+	free(ydensity);
+	free(A);
+	free(c);
+	free(mu);
+	free(muhat);
+	free(sigmahat);
+	free(shape);
+	free(scale);
+	free(dshape);
+	free(dscale);
+	free(dshapehat);
+	free(dscalehat);
 
+
+}
 
 
 
@@ -412,6 +441,7 @@ static inline void traininit(struct params *p, delays_mt *data, delay_mt ymax)
 	dispstr(1,"Initializing training algo...\n");
 	N = p->N;
 	T = data->length;
+	D = p->D;
 	y = data->delay;
 
 	alpha = malloc(N*T*sizeof(float_mt));
@@ -422,7 +452,16 @@ static inline void traininit(struct params *p, delays_mt *data, delay_mt ymax)
 		exit(EXIT_FAILURE);
 	}
 
-	D = p->D;
+
+
+
+	//T = 2*D+10;
+
+
+
+
+
+
 	assert(T>2*D);
 	initalpha();
 	initbeta();

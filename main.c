@@ -6,11 +6,11 @@
 #include "train.h"
 
 #define MINDELAY 0.001
-#define Ni 5
-#define Di 2 //should be 4000
+#define Ni 3
+#define Di 4000 //should be 4000
 
 static void initparams(struct params *p, delay_mt ymax);
-
+static void freeparams(struct params *p);
 int main(int argc, char *argv[])
 {
 	dispstr(0,"Welcome to the HMM program!\n");
@@ -56,13 +56,28 @@ int main(int argc, char *argv[])
 	dispstr(0,"Writing results...\n");
 	write_results(&p);
 
+	freeparams(&p);
+
 	dispstr(0,"Done.\n");
 
 
 	return EXIT_SUCCESS;
 }
 
-
+static void freeparams(struct params *p)
+{
+	free(p->A);
+	free(p->shape);
+	free(p->scale);
+	free(p->mu);
+	free(p->sigma);
+	free(p->dmu);
+	free(p->dsigma);
+	free(p->dshape);
+	free(p->scale);
+	free(p->pi);
+	free(p->steady);
+}
 
 static void initparams(struct params *p, delay_mt ymax)
 {
@@ -108,7 +123,8 @@ static void initparams(struct params *p, delay_mt ymax)
 
 	for(int i=0;i<p->N; i++)
 	{
-		p->shape[i] = (i+1.0)*ymax/(p->N+1);
+		//p->shape[i] = (i+1.0)*ymax/(p->N+1);
+		p->shape[i] = i+1.0;
 		p->scale[i] = 1.0;
 		p->mu[i] = 0.0;
 		p->dmu[i] = i+1.0;
