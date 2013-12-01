@@ -1,13 +1,26 @@
 #ifndef DATASTRUCT_H
 #define DATASTRUCT_H
 
-//typedef double  time_mt;
-//typedef double delay_mt;
-//typedef double float_mt;
-#define time_mt  double
-#define delay_mt double
-#define float_mt double
 
+
+#define DOUBLE  0
+#define LDOUBLE 1
+#define FLOAT   2
+
+#define TYPET DOUBLE
+#define TYPED LDOUBLE
+
+#if TYPET == DOUBLE
+typedef double time_mt;
+#endif
+
+#if TYPED == DOUBLE
+typedef double delay_mt;
+typedef double float_mt;
+#elif TYPED == LDOUBLE
+typedef long double delay_mt;
+typedef long double float_mt;
+#endif
 
 struct delays_mt
 {

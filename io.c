@@ -65,7 +65,11 @@ inline static void strtodata(char *str, delays_mt *data, long long i)
 {
 	char *fin;
 	data->time[i] = strtod(str, &fin);
+#if TYPED == DOUBLE
 	data->delay[i] = strtod(fin, &str);
+#elif TYPED == LDOUBLE
+	data->delay[i] = strtold(fin, &str);
+#endif
 }
 
 
@@ -83,7 +87,7 @@ void plot1D(float_mt *data, long long length)
 	FILE *file = fopen(tempname, "w");
 	for(int i = 0; i<length; i++)
 	{
-		fprintf(file, "%f\n", data[i]);
+		fprintf(file, "%Lf\n", (long double) data[i]);
 	}
 	fclose(file);
 	
@@ -125,25 +129,25 @@ void write_results(struct params *p)
 			fprintf(file, "       %s", space);
 		for(int j=0; j<p->N; j++)
 		{
-			fprintf(file, "%2.4f%s", p->A[i*p->N+j], space);
+			fprintf(file, "%1.4Le%s", (long double) p->A[i*p->N+j], space);
 		}
 		fprintf(file, "\n");
 	}
 	fprintf(file, "shape: %s", space);
 	for(int i = 0; i<p->N; i++)
-		fprintf(file,"%2.4f%s", p->shape[i], space);
+		fprintf(file,"%1.4Le%s", (long double) p->shape[i], space);
 	fprintf(file,"\n");
 	fprintf(file, "scale: %s", space);
 	for(int i = 0; i<p->N; i++)
-		fprintf(file,"%2.4f%s", p->scale[i], space);
+		fprintf(file,"%1.4Le%s", (long double) p->scale[i], space);
 	fprintf(file,"\n");
 	fprintf(file, "dshape:%s", space);
 	for(int i = 0; i<p->N; i++)
-		fprintf(file,"%2.4f%s", p->dshape[i], space);
+		fprintf(file,"%1.4Le%s", (long double) p->dshape[i], space);
 	fprintf(file,"\n");
 	fprintf(file, "dscale:%s", space);
 	for(int i = 0; i<p->N; i++)
-		fprintf(file,"%2.4f%s", p->dscale[i], space);
+		fprintf(file,"%1.4Le%s", (long double) p->dscale[i], space);
 	fprintf(file,"\n");
 
 	fclose(file);
@@ -161,12 +165,12 @@ void write_alpha_beta(float_mt *alpha, float_mt *beta, int N, long long L)
 	{
 		for(int i=0; i<N; i++)
 		{
-			fprintf(file, "%2.4f%s",alpha[t*N+i],space);
+			fprintf(file, "%1.4Le%s",(long double)alpha[t*N+i],space);
 		}
 		fprintf(file, "%s%s", space, space);
 		for(int i=0; i<N; i++)
 		{
-			fprintf(file, "%2.4f%s",beta[t*N+i],space);
+			fprintf(file, "%1.4Le%s",(long double) beta[t*N+i],space);
 		}
 		fprintf(file, "\n");
 

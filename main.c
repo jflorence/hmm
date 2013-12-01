@@ -6,7 +6,7 @@
 #include "train.h"
 
 #define MINDELAY 0.001
-#define Ni 2
+#define Ni 5
 #define Di 2 //should be 4000
 
 static void initparams(struct params *p, delay_mt ymax);
@@ -92,29 +92,29 @@ static void initparams(struct params *p, delay_mt ymax)
 	{
 		for(int i=0;i<p->N*p->N; i++)
 		{
-			p->A[i] = 1/(p->N-1);
+			p->A[i] = 1.0/(p->N-1);
 		}
 		//initialize the diagonal to 0.
 		for(int i=0; i<p->N*p->N; i++)
 		{
-			p->A[i] = 0;
+			p->A[i] = 0.0;
 			i = i+p->N;
 		}
 	}
 	else
 	{
-		p->A[0] = 1;
+		p->A[0] = 1.0;
 	}
 
 	for(int i=0;i<p->N; i++)
 	{
-		p->shape[i] = (i+1)*ymax/(p->N+1);
+		p->shape[i] = (i+1.0)*ymax/(p->N+1);
 		p->scale[i] = 1.0;
-		p->mu[i] = 0;
-		p->dmu[i] = i+1;
-		p->dsigma[i] = 1;
-		p->dshape[i] = i+1;   //how to initialize those ?
-		p->dscale[i] = i+1;
+		p->mu[i] = 0.0;
+		p->dmu[i] = i+1.0;
+		p->dsigma[i] = 1.0;
+		p->dshape[i] = i+1.0;   //how to initialize those ?
+		p->dscale[i] = i+1.0;
 	}
 	
 }

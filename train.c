@@ -10,7 +10,7 @@
 #include "debug.h"
 
 
-#define MAXCOUNTER 3
+#define MAXCOUNTER 1
 
 #define WALPHA
 
@@ -20,7 +20,7 @@ static long D;
 static long size_dist;
 static long size_dur_dist;
 static float_mt step = 0.001;
-static float_mt dstep = 1;
+static float_mt dstep = 1.0;
 static float_mt *alpha;
 static float_mt *beta;
 static float_mt **ydensity;
@@ -67,7 +67,7 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	float_mt previouslike = -INFINITY;
 	float_mt currentlike;
 	float_mt epsilon = -1.0; //don't care about this for the moment...
-	float_mt Dlike = epsilon+1;
+	float_mt Dlike = epsilon+1.0;
 	int counter = 0;
 	
 	traininit(p, data, ymax);	
@@ -101,12 +101,10 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 			p->dshape[i] = dshape[i] = dshapehat[i];
 		}
 		//update log likelihood
-		currentlike = 0;
+		currentlike = 0.0;
 		for(int i=0; i<T; i++)
 		{
 			currentlike+=log(c[i]);
-			printf("c: %f\n", c[i]);
-			printf("logc: %f\n", log(c[i]));
 		}
 		Dlike = fabsl((long double)currentlike-(long double)previouslike);
 		previouslike = currentlike;
@@ -118,8 +116,8 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 #endif
 	
 	dispstr(1,"Training complete.\n");
-	dispstr(2, "Dlike: %f\n", Dlike);
-	dispstr(2, "log-likelihood: %f\n", currentlike);
+	dispstr(2, "Dlike: %e\n", Dlike);
+	dispstr(2, "log-likelihood: %e\n", currentlike);
 	return;
 }
 
@@ -142,7 +140,7 @@ void compute_distribs(long size_dist, long size_dur_dist)
 static inline void initalpha(void)
 {
 	dispstr(2,"(re)initializing alpha...\n");
-	memset(alpha, 0, N*T);
+	memset(alpha, 0, N*T*sizeof(float_mt));
 	alpha[N*(D-1)] = 1.0;
 	return;
 }
@@ -152,7 +150,7 @@ static inline void initalpha(void)
 static inline void initbeta(void)
 {
 	dispstr(2,"(re)initializing beta...\n");
-	memset(beta, 0, N*T);
+	memset(beta, 0, N*T*sizeof(float_mt));
 	for(int i = N*(T-D); i<(T-D+1)*(N);i++)
 	{
 		beta[i] = 1.0;
@@ -162,7 +160,7 @@ static inline void initbeta(void)
 
 static inline void compute_gamma_dist(float_mt *dist, int length, float_mt step, float_mt shape, float_mt scale)
 {
-	float_mt x = 0;
+	float_mt x = 0.0;
 	for(int i = 0; i<length; i++)
 	{
 		float_mt G = tgamma(shape);
@@ -197,23 +195,35 @@ static inline void compute_alphas(void)
 	register float_mt term;
 	for(long long t = D; t<T-D; t++)
 	{
-
+		dispstr(3,"t: %d\n", t);
 		for(int j = 0; j<N; j++)
 		{
+			dispstr(4,"j: %d\n", j);
 			for(int d = 0; d<D; d++)
 			{
+				dispstr(5,"d: %d\n", d);
 				for(int i=0; i<N; i++)
 				{
+					if(j == 0)
+						dispstr(6,"i: %d\n", i);
 					term = alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t-d],d);
 					term *= prod(&(ydensity[j])[t-d],d+1);
+					//dispstr(7,"term: %Le\n");
+					if(j==0)
+					{
+						dispstr(7, "alpha*A: %Le\n", alpha[(t-d-1)*N+i]*A[i*N+j]);
+						dispstr(7, "proddensity: %Le\n", prod(&(ydensity[j])[t-d],d+1));
+						dispstr(7, "durdist: %Le\n", (dur_dists[j])[d+1]);
+					}
+					//dispstr(7, "\n");
 					alpha[t*N+j] += term;
 				}
 			}
 		}
 		c[t] = 1/sum(&alpha[t*N], N);
-		for(int i=0; i<N; i++)
+		for(int j=0; j<N; j++)
 		{
-			alpha[t*N + i] *= c[t];
+			alpha[t*N + j] *= c[t];
 		}
 	}
 }
@@ -256,7 +266,7 @@ static inline void compute_A(void)
 	{
 		for(int j=0; j<N; j++)
 		{
-			num = 0;
+			num = 0.0;
 			for(long long t = D; t<T-D; t++)
 			{
 				for(int d=0; d<D; d++)
@@ -276,9 +286,9 @@ static inline void compute_A(void)
 static inline void compute_mu_sigma(void)
 {
 	dispstr(2,"Computing mu and sigma...\n");
-	float_mt nummu = 0;
-	float_mt numsig = 0;
-	float_mt den = 0;
+	float_mt nummu = 0.0;
+	float_mt numsig = 0.0;
+	float_mt den = 0.0;
 	float_mt term;
 	float_mt somme;
 	for(int j=0; j<N; j++)
@@ -287,7 +297,7 @@ static inline void compute_mu_sigma(void)
 		{
 			for(int d=0;d<D;d++)
 			{
-				somme = 0;
+				somme = 0.0;
 				for(int k=0; k<d+1; k++)
 				{
 					somme += (y[t-d]-mu[j])*(y[t-d]-mu[j]);
@@ -315,7 +325,7 @@ static inline void compute_duration_scale(void)
 	float_mt den;
 	for(int j=0;j<N;j++)
 	{
-		num = 0;
+		num = 0.0;
 		for(long long t=D;t<T-D;t++)
 		{
 			for(int d=0;d<D;d++)
@@ -328,7 +338,7 @@ static inline void compute_duration_scale(void)
 				}
 			}
 		}
-		somme = 0;
+		somme = 0.0;
 		for(long long k=D; k<T-D; k++)
 		{
 			somme += alpha[k*N+j]*beta[k*N+j]/c[k];
@@ -355,13 +365,13 @@ static inline void compute_duration_shape(void)
 	}
 	for(int i=0; i<N; i++)
 	{
-		rate[i] = 1/dscale[i];
+		rate[i] = 1.0/dscale[i];
 	}
 	for(int j=0; j<N; j++)
 	{
 		digamma = gsl_sf_psi_n(0, (double) dshape[j]);
 		polygamma1 = gsl_sf_psi_n(1, (double) dshape[j]);
-		num = 0;
+		num = 0.0;
 		for(long long t=D; t<T-D; t++)
 		{
 			for(int d=0; d<D; d++)
@@ -375,7 +385,7 @@ static inline void compute_duration_shape(void)
 				}
 			}
 		}
-		somme = 0;
+		somme = 0.0;
 		for(long long k=D; k<T-D; k++)
 		{
 			somme += alpha[k*N+j]*beta[k*N+j]/c[k];
@@ -387,12 +397,6 @@ static inline void compute_duration_shape(void)
 		{
 			dshapehat[j] = 0.01;
 		}
-		dispstr(4, "j: %d\n", j);	
-		dispstr(5, "dshape: %f\n", dshape[j]);
-		dispstr(5, "digamma: %f\n", digamma);
-		dispstr(5, "C: %f\n", C);
-		dispstr(5, "polygamma: %f\n", polygamma1);
-		dispstr(5, "dshapehat: %f\n", dshapehat[j]);
 	}
 }
 
