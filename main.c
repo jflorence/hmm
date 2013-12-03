@@ -7,7 +7,7 @@
 
 #define MINDELAY 0.001
 #define Ni 3
-#define Di 4000 //should be 4000
+#define Di 2//should be 4000
 
 static void initparams(struct params *p, delay_mt ymax);
 static void freeparams(struct params *p);
@@ -50,6 +50,10 @@ int main(int argc, char *argv[])
 	struct params p;
 	dispstr(0,"Initializing Markov parameters...\n");
 	initparams(&p, ymax);
+	
+
+	input.length = input.length/300;
+
 	dispstr(0,"Training model...\n");
 	train(&p, &input, ymax);
 

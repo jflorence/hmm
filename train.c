@@ -19,6 +19,7 @@ static long long T;
 static long D;
 static long size_dist;
 static long size_dur_dist;
+static int scalingstride = 1;
 static float_mt step = 0.001;
 static float_mt dstep = 1.0;
 static float_mt *alpha;
@@ -54,7 +55,6 @@ static inline void compute_alphas(void);
 static inline void compute_betas(void);
 static inline void compute_A(void);
 static inline void compute_mu_sigma(void);
-//compute gamma params
 static inline void compute_duration_scale(void);
 static inline void compute_duration_shape(void);
 
@@ -72,7 +72,7 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	int counter = 0;
 	
 	traininit(p, data, ymax);	
-	
+
 	while(counter++ < MAXCOUNTER && Dlike>epsilon) //or likelihood...
 	{
 		dispstr(1,"Starting iteration %d\n", counter);
@@ -115,6 +115,17 @@ void train(struct params *p, delays_mt *data, delay_mt ymax)
 	dispstr(1, "Writing alphas and betas to file...\n");
 	write_alpha_beta(alpha, beta, N, T);
 #endif
+
+
+	FILE *file = fopen("c.txt","w");
+	for(int i=0; i<T; i++)
+	{
+		fprintf(file, "%Le\n", c[i]);
+	}
+	fclose(file);
+
+
+
 
 	freetrainparams();
 	
@@ -204,7 +215,7 @@ static inline void compute_alphas(void)
 	float_mt term;
 	float_mt prodc;
 	float_mt prody;
-	
+	float_mt product;	
 	for(long long t = D; t<T-D; t++)
 	{
 		for(int j = 0; j<N; j++)
@@ -215,15 +226,18 @@ static inline void compute_alphas(void)
 			{
 				prodc *= c[t-d];
 				prody *= (ydensity[j])[t-d];
+				product = prodc*prody*(dur_dists[j])[d+1];
 				for(int i=0; i<N; i++)
 				{
-					term = alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t-d],d);
-					term *= prod(&(ydensity[j])[t-d],d+1);
+					term = alpha[(t-d-1)*N+i]*A[i*N+j]*product;
 					alpha[t*N+j] += term;
 				}
 			}
 		}
-		c[t] = 1/sum(&alpha[t*N], N);
+		if(t%scalingstride == 0)
+		{
+			//c[t] = 1/sum(&alpha[t*N], N);
+		}
 		for(int j=0; j<N; j++)
 		{
 			alpha[t*N + j] *= c[t];
@@ -233,19 +247,30 @@ static inline void compute_alphas(void)
 static inline void compute_betas(void)
 {
 	dispstr(2,"Computing betas...\n");
-	register float_mt term;
+	float_mt term;
+	float_mt prodc;
+	float_mt prody[N];
+	float_mt product;
 	long index;
 	for(long long t = T-D-1; t>=D; t--)
 	{
 		for(int i =0; i<N; i++)
 		{
 			index = t*N+i;
+			prodc = 1.0;
+			for(int j=0; j<N; j++)
+			{
+				prody[j] = 1.0;
+			}
 			for(int d=0; d<D; d++)
 			{
+				if(d<D-1)
+					prodc *= c[t+1+d];
 				for(int j = 0; j<N; j++)
 				{
-					term = A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t+1], d)*beta[(t+d+1)*N+j];
-					term *= prod(&(ydensity[j])[t+1],d+1);
+					prody[j] *= (ydensity[j])[t+1+d];
+					product = prodc*prody[j]*(dur_dists[j])[d+1]*beta[(t+d+1)*N+j];
+					term = A[i*N+j]*product;
 					beta[index] += term;
 				}
 			}
@@ -259,6 +284,10 @@ static inline void compute_A(void)
 	float_mt num;
 	float_mt term;
 	float_mt den;
+	float_mt prodc;
+	float_mt prody;
+	float_mt product;
+	float_mt somme;
 	float_mt *temp = malloc(sizeof(float_mt)*T);
 	if(temp == NULL)
 	{
@@ -272,16 +301,24 @@ static inline void compute_A(void)
 			num = 0.0;
 			for(long long t = D; t<T-D; t++)
 			{
+				prodc = 1.0;
+				prody = 1.0;
+				somme = 0.0;
 				for(int d=0; d<D; d++)
 				{
-					term = A[i*N+j]*(dur_dists[j])[d+1]*beta[(t+d+1)*N+j]*prod(&c[t+1],d);
-					term *= alpha[t*N+i]*prod(&(ydensity[j])[t+1],d+1);
+					if(d<D-1)
+						prodc *= c[t+1+d];
+					prody *= (ydensity[j])[t+d+1];
+					product = prody*prodc*(dur_dists[j])[d+1]*beta[(t+d+1)*N+j]*A[i*N+j];
+					somme += product;
+					term = alpha[t*N+i]*product;
 					num += term;
 				}
-			temp[t]=alpha[t*N+i]*beta[t*N+i]/c[t];
+				temp[t]=alpha[t*N+i]*beta[t*N+i]/c[t];
 			}
 			den = sum(&temp[D], T-2*D);
 			Ahat[i*N+j] = num/den;
+			
 		}
 	}
 	free(temp);
@@ -294,22 +331,30 @@ static inline void compute_mu_sigma(void)
 	float_mt den = 0.0;
 	float_mt term;
 	float_mt somme;
+	float_mt somme2;
+	float_mt prodc;
+	float_mt prody;
+	float_mt product;
 	for(int j=0; j<N; j++)
 	{
 		for(long t=D; t<T-D; t++)
 		{
+			prodc = 1.0/c[t];
+			prody = 1.0;
+			somme = 0;
+			somme2 = 0;
 			for(int d=0;d<D;d++)
 			{
-				somme = 0.0;
-				for(int k=0; k<d+1; k++)
-				{
-					somme += (y[t-d]-mu[j])*(y[t-d]-mu[j]);
-				}
+				somme += (y[t-d]-mu[j])*(y[t-d]-mu[j]);
+				somme2 += y[t-d];
+				prodc *= c[t-d];
+				prody *= (ydensity[j])[t-d];
+				
+				product = prodc*prody*(dur_dists[j])[d+1];
 				for(int i =0; i<N; i++)
 				{
-					term = alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t-d],d);
-					term *= prod(&(ydensity[j])[t-d], d+1);
-					nummu += term*sum(&y[t-d],d+1);
+					term = alpha[(t-d-1)*N+i]*A[i*N+j]*product;
+					nummu += term*somme2;
 					numsig += term*somme;
 					den = den+term;
 				}
@@ -326,17 +371,24 @@ static inline void compute_duration_scale(void)
 	float_mt term;
 	float_mt somme;
 	float_mt den;
+	float_mt prodc;
+	float_mt prody;
+	float_mt product;
 	for(int j=0;j<N;j++)
 	{
 		num = 0.0;
 		for(long long t=D;t<T-D;t++)
 		{
+			prodc = 1.0/c[t];
+			prody = 1.0;
 			for(int d=0;d<D;d++)
 			{
+				prodc *= c[t-d];
+				prody *= (ydensity[j])[t-d];
+				product = prodc*prody*(dur_dists[j])[d+1]*(d+1)*beta[t*N+j];
 				for(int i=0; i<N; i++)
 				{
-					term = (d+1)*alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1]*prod(&c[t-d], d);
-					term *= beta[t*N+j]*prod(&(ydensity[j])[t-d], d+1);
+					term = alpha[(t-d-1)*N+i]*A[i*N+j]*product;
 					num += term;
 				}
 			}
@@ -361,6 +413,10 @@ static inline void compute_duration_shape(void)
 	float_mt somme;
 	float_mt *rate = malloc(sizeof(float_mt)*N);
 	
+	float_mt prodc;
+	float_mt prody;
+	float_mt product;
+
 	if(rate == NULL)
 	{
 		fprintf(stderr, "Couldn't malloc\n");
@@ -377,13 +433,16 @@ static inline void compute_duration_shape(void)
 		num = 0.0;
 		for(long long t=D; t<T-D; t++)
 		{
+			prodc = 1.0/c[t];
+			prody = 1.0;
 			for(int d=0; d<D; d++)
 			{
+				prodc *= c[t-d];
+				prody *= (ydensity[j])[t-d];
+				product = prodc*prody*(dur_dists[j])[d+1]*log(rate[j]*(d+1))*beta[t*N+j];
 				for(int i=0; i<N; i++)
 				{
-					term = log(rate[j]*(d+1))*alpha[(t-d-1)*N+i]*A[i*N+j]*(dur_dists[j])[d+1];
-					term *= prod(&(ydensity[j])[t-d], d+1);
-					term *= beta[t*N+j]*prod(&c[t-d], d+1);
+					term = product*alpha[(t-d-1)*N+i]*A[i*N+j];
 					num += term;
 				}
 			}
@@ -457,8 +516,8 @@ static inline void traininit(struct params *p, delays_mt *data, delay_mt ymax)
 
 	//T = 2*D+10;
 
-
-
+	printf("t: %lld\n", T);
+	printf("d: %ld", D);
 
 
 

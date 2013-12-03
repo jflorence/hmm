@@ -57,6 +57,7 @@ delays_mt getinput(void)
 	{
 			strtodata(str, &retval, i);
 	}
+	printf("nblines: %lld\n\n\n", nblines);
 	return retval;
 }
 
