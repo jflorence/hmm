@@ -236,7 +236,7 @@ static inline void compute_alphas(void)
 		}
 		if(t%scalingstride == 0)
 		{
-			//c[t] = 1/sum(&alpha[t*N], N);
+			c[t] = 1/sum(&alpha[t*N], N);
 		}
 		for(int j=0; j<N; j++)
 		{
